@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mandala — layer i</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:      #0d0d0d;
+  --text:    #d6d3c6;
+  --dim:     #8a8880;
+  --dimmer:  #5a5a54;
+  --accent:  #8aba8a;
+  --amber:   #9a7a50;
+  --number:  #e4d4a4;
+  --border:  #252522;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+  padding: 2.5rem 3rem;
+}
+
+/* ── Header ─────────────────────────────────────────── */
+#header {
+  margin-bottom: 2.5rem;
+}
+#title {
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+#title em {
+  color: var(--text);
+  font-style: normal;
+}
+
+/* ── Layout ─────────────────────────────────────────── */
+#main {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 4rem;
+  max-width: 820px;
+}
+
+.section-label {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dimmer);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.35rem;
+  margin-bottom: 1.1rem;
+}
+
+/* ── Resources ──────────────────────────────────────── */
+#resources-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.resource-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: baseline;
+  column-gap: 1rem;
+  margin-bottom: 0.55rem;
+}
+.resource-row.hidden { display: none; }
+
+.res-name  { color: var(--dim); }
+.res-value { color: var(--number); text-align: right; min-width: 5ch; }
+.res-rate  { color: var(--dimmer); font-size: 11px; text-align: right; min-width: 8ch; }
+
+/* Substrate block */
+#substrate-block {
+  margin-top: 1.8rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border);
+}
+
+#substrate-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 0.6rem;
+}
+#substrate-name { color: var(--dim); font-size: 13px; }
+#substrate-val  { color: var(--number); font-size: 13px; }
+
+#bar-track {
+  height: 3px;
+  background: var(--border);
+}
+#bar-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.6s ease;
+}
+#substrate-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--dimmer);
+  margin-top: 0.4rem;
+}
+
+/* ── Actions / Upgrades ─────────────────────────────── */
+#actions-panel {}
+
+.action-btn, .upgrade-btn {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 0.55rem 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  margin-bottom: 0.55rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.action-btn:hover:not(:disabled),
+.upgrade-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.action-btn:disabled,
+.upgrade-btn:disabled {
+  opacity: 0.25;
+  cursor: default;
+}
+
+.btn-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--dim);
+  margin-top: 0.15rem;
+}
+
+/* ── Log ────────────────────────────────────────────── */
+#log-section {
+  margin-top: 3rem;
+  max-width: 820px;
+}
+
+#log {
+  font-size: 12px;
+  color: var(--dim);
+  min-height: 2rem;
+}
+
+#log p {
+  margin-bottom: 0.25rem;
+  opacity: 0.55;
+  transition: opacity 2.5s ease;
+}
+#log p.fresh {
+  opacity: 1;
+  color: var(--text);
+}
+
+/* ── Dissolution overlay ────────────────────────────── */
+#dissolve {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  padding: 4rem 5rem;
+  flex-direction: column;
+  justify-content: center;
+}
+#dissolve.active { display: flex; }
+
+#dissolve-lines p {
+  color: var(--dim);
+  font-size: 15px;
+  margin-bottom: 1.2rem;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+}
+#dissolve-lines p.show { opacity: 1; }
+
+#dissolve-echo {
+  margin-top: 0.5rem;
+  font-size: 12px;
+  color: var(--dimmer);
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+#dissolve-echo.show { opacity: 1; }
+
+#dissolve-cta {
+  margin-top: 3.5rem;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--dimmer);
+  opacity: 0;
+  transition: opacity 1.5s ease;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  text-transform: uppercase;
+  padding: 0;
+}
+#dissolve-cta.show { opacity: 0.45; }
+#dissolve-cta:hover { opacity: 0.9 !important; color: var(--text); }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="title">mandala &nbsp;·&nbsp; <em>layer i</em> &nbsp;·&nbsp; archaebacteria</div>
+</div>
+
+<div id="main">
+
+  <!-- LEFT: Resources -->
+  <div id="resources-panel">
+    <div class="section-label">substrate chemistry</div>
+
+    <div class="resource-row" id="row-sulfur">
+      <span class="res-name">sulfur</span>
+      <span class="res-value" id="val-sulfur">0.0</span>
+      <span class="res-rate"  id="rate-sulfur">+0.00/s</span>
+    </div>
+
+    <div class="resource-row" id="row-biomass">
+      <span class="res-name">biomass</span>
+      <span class="res-value" id="val-biomass">0.0</span>
+      <span class="res-rate"  id="rate-biomass">+0.00/s</span>
+    </div>
+
+    <div class="resource-row hidden" id="row-iron">
+      <span class="res-name">iron</span>
+      <span class="res-value" id="val-iron">0.0</span>
+      <span class="res-rate"  id="rate-iron">+0.00/s</span>
+    </div>
+
+    <div id="substrate-block">
+      <div id="substrate-header">
+        <span id="substrate-name">substrate conditioned</span>
+        <span id="substrate-val">0.0 / 100</span>
+      </div>
+      <div id="bar-track"><div id="bar-fill"></div></div>
+      <div id="substrate-meta">
+        <span id="stage-label">pioneer activity</span>
+        <span id="sub-rate-label"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Actions -->
+  <div id="actions-panel">
+    <div class="section-label">actions</div>
+
+    <button class="action-btn" id="btn-metabolize" disabled>
+      metabolize
+      <span class="btn-sub">consume 1 sulfur → 0.4 biomass</span>
+    </button>
+
+    <div id="upgrades"></div>
+  </div>
+
+</div>
+
+<!-- Log -->
+<div id="log-section">
+  <div class="section-label">observations</div>
+  <div id="log"></div>
+</div>
+
+<!-- Dissolution screen -->
+<div id="dissolve">
+  <div id="dissolve-lines"></div>
+  <div id="dissolve-echo"></div>
+  <button id="dissolve-cta">the sediment remembers &nbsp;·&nbsp; continue</button>
+</div>
+
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const WIN_SUBSTRATE = 100;
+const TICK_MS       = 80;
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
+const s = {
+  sulfur:    0,
+  biomass:   0,
+  iron:      0,
+  substrate: 0,
+
+  // base per-second rates (before multipliers)
+  sulfurRate:    0.18,
+  ironRate:      0,
+  biomassRate:   0,
+  substrateRate: 0,
+
+  // multipliers
+  biomassMulti:   1,
+  substrateMulti: 1,
+
+  bought:            new Set(),
+  visible:           new Set(),
+  loggedMilestones:  new Set(),
+
+  phase: 'play', // 'play' | 'dissolving'
+  lastTick: null,
+};
+
+// ─── Upgrades ─────────────────────────────────────────────────────────────────
+
+const UPGRADES = [
+  {
+    id:    'pathway',
+    label: 'metabolic pathway',
+    sub:   'the conversion runs on its own — +0.12 biomass/s',
+    cost:  { biomass: 15 },
+    show:  () => s.biomass >= 4,
+    buy()  { s.biomassRate += 0.12; },
+    log:   'the conversion runs without you',
+  },
+  {
+    id:    'scavenge',
+    label: 'chemical scavenge',
+    sub:   'deeper mineral access — +0.25 sulfur/s',
+    cost:  { biomass: 28 },
+    show:  () => s.bought.has('pathway'),
+    buy()  { s.sulfurRate += 0.25; },
+    log:   'the seam opens',
+  },
+  {
+    id:    'pathway2',
+    label: 'secondary pathway',
+    sub:   'another conversion thread — +0.12 biomass/s',
+    cost:  { biomass: 55 },
+    show:  () => s.bought.has('scavenge'),
+    buy()  { s.biomassRate += 0.12; },
+    log:   null,
+  },
+  {
+    id:    'biofilm',
+    label: 'biofilm layer',
+    sub:   'accumulated structure — 1.8× biomass production',
+    cost:  { biomass: 110 },
+    show:  () => s.bought.has('pathway2'),
+    buy()  { s.biomassMulti *= 1.8; },
+    log:   'layers accumulate. the chemistry changes',
+  },
+  {
+    id:    'scavenge2',
+    label: 'deep seam access',
+    sub:   'further down — +0.4 sulfur/s',
+    cost:  { biomass: 180 },
+    show:  () => s.bought.has('biofilm'),
+    buy()  { s.sulfurRate += 0.4; },
+    log:   null,
+  },
+  {
+    id:    'iron_seam',
+    label: 'iron seam',
+    sub:   'new mineral axis — unlocks iron (+0.12/s)',
+    cost:  { biomass: 280 },
+    show:  () => s.bought.has('scavenge2'),
+    buy()  { s.ironRate = 0.12; document.getElementById('row-iron').classList.remove('hidden'); },
+    log:   'something else is here. heavier.',
+  },
+  {
+    id:    'iron_resp',
+    label: 'iron respiration',
+    sub:   'process iron for biomass — +0.3 biomass/s',
+    cost:  { biomass: 420, iron: 8 },
+    show:  () => s.bought.has('iron_seam') && s.iron >= 4,
+    buy()  { s.biomassRate += 0.3; },
+    log:   'the reduction runs deep',
+  },
+  {
+    id:    'pathway3',
+    label: 'tertiary pathway',
+    sub:   'the metabolism diversifies — +0.2 biomass/s',
+    cost:  { biomass: 650, iron: 18 },
+    show:  () => s.bought.has('iron_resp'),
+    buy()  { s.biomassRate += 0.2; },
+    log:   null,
+  },
+  {
+    id:    'colony_density',
+    label: 'colony density',
+    sub:   'more cells per unit space — 1.6× all biomass',
+    cost:  { biomass: 1100, iron: 32 },
+    show:  () => s.bought.has('pathway3'),
+    buy()  { s.biomassMulti *= 1.6; },
+    log:   'the colony thickens. something changes at the boundary.',
+  },
+  {
+    id:    'nitrogen_fix',
+    label: 'nitrogen fixation',
+    sub:   'begin conditioning the substrate — +0.06/s',
+    cost:  { biomass: 1800, iron: 55 },
+    show:  () => s.bought.has('colony_density'),
+    buy()  { s.substrateRate += 0.06; },
+    log:   'something begins to fix. the ground shifts.',
+  },
+  {
+    id:    'fix2',
+    label: 'expanded fixation network',
+    sub:   'more nitrogen processed — +0.10/s substrate',
+    cost:  { biomass: 3500, iron: 90 },
+    show:  () => s.bought.has('nitrogen_fix') && s.substrate >= 8,
+    buy()  { s.substrateRate += 0.10; },
+    log:   null,
+  },
+  {
+    id:    'sub_multi',
+    label: 'territorial expansion',
+    sub:   'the colony exceeds the origin — 2× substrate rate',
+    cost:  { biomass: 7000, iron: 180 },
+    show:  () => s.bought.has('fix2') && s.substrate >= 28,
+    buy()  { s.substrateMulti *= 2; },
+    log:   'the colony spreads beyond what was intended',
+  },
+  {
+    id:    'fix3',
+    label: 'dense fixation',
+    sub:   'maximum throughput — +0.15/s substrate',
+    cost:  { biomass: 12000, iron: 320 },
+    show:  () => s.bought.has('sub_multi') && s.substrate >= 55,
+    buy()  { s.substrateRate += 0.15; },
+    log:   null,
+  },
+];
+
+// ─── Milestones ───────────────────────────────────────────────────────────────
+
+const MILESTONES = [
+  { key: 'biomass_1',  cond: () => s.biomass >= 1,    msg: 'something processes' },
+  { key: 'sub_5',     cond: () => s.substrate >= 5,   msg: 'the substrate holds differently now' },
+  { key: 'sub_25',    cond: () => s.substrate >= 25,  msg: 'conditioning spreads beyond the origin point' },
+  { key: 'sub_50',    cond: () => s.substrate >= 50,  msg: 'half of it has changed. the change is irreversible.' },
+  { key: 'sub_75',    cond: () => s.substrate >= 75,  msg: 'nearly ready. nearly.' },
+  { key: 'sub_90',    cond: () => s.substrate >= 90,  msg: 'the work approaches its end' },
+];
+
+// ─── Dissolution text ─────────────────────────────────────────────────────────
+
+const DISSOLVE_LINES = [
+  'the colony reaches a threshold it cannot cross back over.',
+  'nitrogen fixed. minerals released. organic matter laid down.',
+  'the substrate holds what it was given.',
+  'the work is done.',
+  'the organism does not know it is done.',
+  'it simply stops.',
+];
+
+const DISSOLVED_ECHO = 'archaea — the sediment remembers';
+
+// ─── Tick ─────────────────────────────────────────────────────────────────────
+
+let lastTick = performance.now();
+
+function tick() {
+  if (s.phase !== 'play') return;
+
+  const now = performance.now();
+  const dt  = Math.min((now - lastTick) / 1000, 0.5);
+  lastTick  = now;
+
+  s.sulfur    += s.sulfurRate * dt;
+  s.iron      += s.ironRate   * dt;
+  s.biomass   += s.biomassRate   * s.biomassMulti   * dt;
+  s.substrate += s.substrateRate * s.substrateMulti * dt;
+  s.substrate  = Math.min(s.substrate, WIN_SUBSTRATE);
+
+  checkMilestones();
+  checkVisibility();
+
+  if (s.substrate >= WIN_SUBSTRATE) {
+    triggerDissolution();
+    return;
+  }
+
+  render();
+  setTimeout(tick, TICK_MS);
+}
+
+// ─── Milestones ───────────────────────────────────────────────────────────────
+
+function checkMilestones() {
+  for (const m of MILESTONES) {
+    if (!s.loggedMilestones.has(m.key) && m.cond()) {
+      s.loggedMilestones.add(m.key);
+      log(m.msg);
+    }
+  }
+}
+
+// ─── Upgrade visibility ───────────────────────────────────────────────────────
+
+function checkVisibility() {
+  for (const u of UPGRADES) {
+    if (!s.bought.has(u.id) && !s.visible.has(u.id) && u.show()) {
+      s.visible.add(u.id);
+      mountUpgrade(u);
+    }
+  }
+}
+
+function mountUpgrade(u) {
+  const btn = document.createElement('button');
+  btn.className = 'upgrade-btn';
+  btn.id = 'upg-' + u.id;
+
+  const costStr = Object.entries(u.cost).map(([r, v]) => `${v} ${r}`).join(' · ');
+  btn.innerHTML = `${u.label}<span class="btn-sub">${costStr} — ${u.sub}</span>`;
+
+  btn.addEventListener('click', () => {
+    if (s.bought.has(u.id) || !canAfford(u.cost)) return;
+    spend(u.cost);
+    s.bought.add(u.id);
+    u.buy();
+    btn.remove();
+    checkVisibility();
+    if (u.log) log(u.log);
+    render();
+  });
+
+  document.getElementById('upgrades').appendChild(btn);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+
+function fmt(n) {
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e4) return (n / 1e3).toFixed(1) + 'k';
+  return n.toFixed(1);
+}
+
+function fmtRate(n) {
+  return (n >= 0 ? '+' : '') + n.toFixed(2) + '/s';
+}
+
+function render() {
+  document.getElementById('val-sulfur').textContent   = fmt(s.sulfur);
+  document.getElementById('rate-sulfur').textContent  = fmtRate(s.sulfurRate);
+
+  document.getElementById('val-biomass').textContent  = fmt(s.biomass);
+  const bRate = s.biomassRate * s.biomassMulti;
+  document.getElementById('rate-biomass').textContent = fmtRate(bRate);
+
+  if (s.ironRate > 0) {
+    document.getElementById('val-iron').textContent   = fmt(s.iron);
+    document.getElementById('rate-iron').textContent  = fmtRate(s.ironRate);
+  }
+
+  // Substrate
+  const pct = Math.min(s.substrate / WIN_SUBSTRATE, 1);
+  document.getElementById('substrate-val').textContent = fmt(s.substrate) + ' / 100';
+  document.getElementById('bar-fill').style.width = (pct * 100).toFixed(2) + '%';
+
+  // Stage label
+  let stage = 'pioneer activity';
+  if      (pct >= 0.90) stage = 'climax';
+  else if (pct >= 0.75) stage = 'expression';
+  else if (pct >= 0.50) stage = 'colonization';
+  else if (pct >= 0.25) stage = 'early emergence';
+  document.getElementById('stage-label').textContent = stage;
+
+  // Substrate rate
+  const sRate = s.substrateRate * s.substrateMulti;
+  document.getElementById('sub-rate-label').textContent = sRate > 0 ? fmtRate(sRate) : '';
+
+  // Metabolize button
+  document.getElementById('btn-metabolize').disabled = s.sulfur < 1;
+
+  // Upgrade affordability
+  for (const u of UPGRADES) {
+    if (s.bought.has(u.id) || !s.visible.has(u.id)) continue;
+    const btn = document.getElementById('upg-' + u.id);
+    if (btn) btn.disabled = !canAfford(u.cost);
+  }
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function canAfford(cost) {
+  for (const [r, v] of Object.entries(cost)) {
+    if ((s[r] ?? 0) < v) return false;
+  }
+  return true;
+}
+
+function spend(cost) {
+  for (const [r, v] of Object.entries(cost)) {
+    s[r] -= v;
+  }
+}
+
+// ─── Log ─────────────────────────────────────────────────────────────────────
+
+function log(msg) {
+  const logEl = document.getElementById('log');
+  const p = document.createElement('p');
+  p.textContent = msg;
+  p.className = 'fresh';
+  logEl.prepend(p);
+  setTimeout(() => p.classList.remove('fresh'), 3500);
+  while (logEl.children.length > 14) logEl.removeChild(logEl.lastChild);
+}
+
+// ─── Dissolution ──────────────────────────────────────────────────────────────
+
+async function triggerDissolution() {
+  s.phase = 'dissolving';
+
+  const overlay   = document.getElementById('dissolve');
+  const linesEl   = document.getElementById('dissolve-lines');
+  const echoEl    = document.getElementById('dissolve-echo');
+  const ctaEl     = document.getElementById('dissolve-cta');
+  overlay.classList.add('active');
+
+  for (const line of DISSOLVE_LINES) {
+    await delay(1600);
+    const p = document.createElement('p');
+    p.textContent = line;
+    linesEl.appendChild(p);
+    void p.offsetWidth; // force reflow before transition
+    p.classList.add('show');
+  }
+
+  await delay(1800);
+  echoEl.textContent = DISSOLVED_ECHO;
+  void echoEl.offsetWidth;
+  echoEl.classList.add('show');
+
+  await delay(2000);
+  ctaEl.classList.add('show');
+
+  ctaEl.addEventListener('click', () => {
+    linesEl.innerHTML   = '';
+    echoEl.textContent  = '';
+    ctaEl.style.display = 'none';
+
+    const p = document.createElement('p');
+    p.textContent = 'layer ii — cyanobacteria — not yet built';
+    p.style.opacity = '1';
+    p.style.color = 'var(--dim)';
+    linesEl.appendChild(p);
+  }, { once: true });
+}
+
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+document.getElementById('btn-metabolize').addEventListener('click', () => {
+  if (s.sulfur < 1 || s.phase !== 'play') return;
+  s.sulfur  -= 1;
+  s.biomass += 0.4;
+  if (!s.loggedMilestones.has('first_click')) {
+    s.loggedMilestones.add('first_click');
+    log('the chemistry responds');
+  }
+  render();
+});
+
+log('you are in the substrate. something moves.');
+lastTick = performance.now();
+setTimeout(tick, TICK_MS);
+</script>
+</body>
+</html>
