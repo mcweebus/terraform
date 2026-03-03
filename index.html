@@ -635,6 +635,7 @@ const s = {
   },
 
   totalMP: 10,
+  debugSpeed: false,
 
   bought:           new Set(),
   visibleUpgrades:  new Set(),
@@ -905,7 +906,7 @@ function tick() {
   if (s.phase !== 'play') return;
 
   const now = performance.now();
-  const dt  = Math.min((now - lastTick) / 1000, 0.5);
+  const dt  = Math.min((now - lastTick) / 1000, 0.5) * (s.debugSpeed ? 10 : 1);
   lastTick  = now;
 
   // 1. Raw element accumulation
@@ -1389,6 +1390,20 @@ async function triggerDissolution(score) {
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// ─── Konami-style cheat code ──────────────────────────────────────────────────
+
+;(() => {
+  const CODE = 'colonelpotter';
+  let buf = '';
+  document.addEventListener('keydown', e => {
+    buf = (buf + e.key).slice(-CODE.length);
+    if (buf === CODE) {
+      s.debugSpeed = !s.debugSpeed;
+      document.getElementById('title').style.opacity = s.debugSpeed ? '0.4' : '1';
+    }
+  });
+})();
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 
